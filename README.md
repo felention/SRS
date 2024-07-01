@@ -27,8 +27,9 @@ jq 1.6
 - SRS is primarily designed to be ran in a Screen session.
 - I run a check to see what ISP owns the IPs that are about to be port scanned. This not only helps to prevent false positives (Cloudflare has every port open), but it also stops time being wasted on things like WAFs and shared hosting. More can be added on line `129` using `; /*HOST*/Id`
 - For some reason, Subzy is adament on having it's own home folder to store it's fingerprints instead of just using the original it copies it from. I do remove the folder after Subzy finishes, but it can be kept by removing line `99`
+- As disk space would be filled up thanks to Snap and GoWitness not clearing up, I split the input lists into 500 lines each. This will take up about 5.5GB each before being cleared and proceeding to the next list, as each Chrome runner takes about 11MB. To be increased or lowered, just change the split values in lines `70`, `74`, `155` & `159`
 
 ## To be added
-- Whois - This will check if a domain exists before proceeding. This is just in-case there is a typo when typing in the target.
+- Whois - This will check if a domain exists before starting SRS. This is just in-case there is a typo when typing in the target.
 - States - States will allow you to continue where you left off if you're performing SRS outside of a screen session, or if there is an abrupt end, such as a crash.
 - Debugging - All this will do is save the whole output into a seperate file. It will also save backups of files before they are overwritten or removed.
