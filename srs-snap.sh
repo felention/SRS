@@ -129,23 +129,27 @@ sed -i '/:/!d; s/".*"/ - /g' isp.txt
 sed '/Defense.net/Id; /Akamai/Id; /Cloudflare/Id; /Fastly/Id; /CheetahMail/Id; /GoDaddy/Id; /Incapsula/Id; /Wix/Id; /SquareSpace/Id; /Namecheap/Id; /Web-hosting/Id' isp.txt > scan.txt
 sed -i 's/.* //g' scan.txt
 
-### Masscan
-echo "Starting Masscan..."
-rate="$(cat scan.txt | wc -l)"
-rate=$((rate*1000))
-if [[ "$rate" -gt "25000000" ]]; then
-    rate=25000000
+if [[ -s scan.txt ]]; then
+    ### Masscan
+    echo "Starting Masscan..."
+    rate="$(cat scan.txt | wc -l)"
+    rate=$((rate*1000))
+    if [[ "$rate" -gt "25000000" ]]; then
+        rate=25000000
+    fi
+    sudo masscan -iL scan.txt -p 0-65535 -oX ports.txt --rate "$rate"
+
+    ### Port Parse
+    echo "Starting Port Parse..."
+    sed -i '/state="open"/!d' ports.txt
+    sed -i 's/.*addr="//g; s/" addr.*portid="/:/g; s/".*//g' ports.txt
+    awk -i inplace '!a[$0]++' ports.txt
+else
+    echo "Skipping Masscan and Port Parse as IPs aren't useful."
 fi
-sudo masscan -iL scan.txt -p 0-65535 -oX ports.txt --rate "$rate"
 rm scan.txt
 
-### Port Parse
-echo "Starting Port Parse..."
-sed -i '/state="open"/!d' ports.txt
-sed -i 's/.*addr="//g; s/" addr.*portid="/:/g; s/".*//g' ports.txt
-awk -i inplace '!a[$0]++' ports.txt
-
-if [[ -s ports.txt ]]; then
+if [[ -f ports.txt && -s ports.txt ]]; then
     ### GoWitness Ports
     echo "Starting GoWitness Ports..."
     mkdir "GoWitness-Ports" && cd "$_"
@@ -170,6 +174,11 @@ if [[ -s ports.txt ]]; then
     mv "gowitness" "Report"
     rm -rf "http.txt" "https.txt" "report.zip" "http-Split/" "https-Split/"
     cd ..
+else
+    echo "Skipping GoWitness Ports as there are no open ports or useful IPs."
+    if [[ ! -s ports.txt ]]; then
+        rm ports.txt
+    fi
 fi
 
 ### Archiving
