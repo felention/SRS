@@ -64,26 +64,16 @@ awk -i inplace '!a[$0]++' ips.txt
 ### GoWitness Subdomains
 echo "Starting GoWitness Subdomains..."
 mkdir "GoWitness-Subdomains" && cd "$_"
-cp "../subdomains.txt" "http.txt"
-sed -i "s|^|http://|g" "http.txt"
-mkdir "http-Split"
-split -l 500 "http.txt" "http-Split/"
-cp "../subdomains.txt" "https.txt"
-sed -i "s|^|https://|g" "https.txt"
-mkdir "https-Split"
-split -l 500 "https.txt" "https-Split/"
-for file in http-Split/*; do
-    gowitness file -X 2560 -Y 1440 -F -f "$file" -t 1
-    sudo rm -rf /tmp/snap-private-tmp/snap.chromium/tmp/chromedp-runner*/
-done
-for file in https-Split/*; do
+mkdir "Split"
+split -l 250 "../subdomains.txt" "Split/"
+for file in Split/*; do
     gowitness file -X 2560 -Y 1440 -F -f "$file" -t 1
     sudo rm -rf /tmp/snap-private-tmp/snap.chromium/tmp/chromedp-runner*/
 done
 gowitness report export -f "report.zip"
 unzip "report.zip"
 mv "gowitness" "Report"
-rm -rf "http.txt" "https.txt" "report.zip" "http-Split/" "https-Split/"
+rm -rf "report.zip" "Split/"
 cd ..
 
 ### Subzy
@@ -153,26 +143,16 @@ if [[ -f ports.txt && -s ports.txt ]]; then
     ### GoWitness Ports
     echo "Starting GoWitness Ports..."
     mkdir "GoWitness-Ports" && cd "$_"
-    cp "../ports.txt" "http.txt"
-    sed -i "s|^|http://|g" "http.txt"
-    mkdir "http-Split"
-    split -l 500 "http.txt" "http-Split/"
-    cp "../ports.txt" "https.txt"
-    sed -i "s|^|https://|g" "https.txt"
-    mkdir "https-Split"
-    split -l 500 "https.txt" "https-Split/"
-    for file in http-Split/*; do
-        gowitness file -X 2560 -Y 1440 -F -f "$file" -t 1
-        sudo rm -rf /tmp/snap-private-tmp/snap.chromium/tmp/chromedp-runner*/
-    done
-    for file in https-Split/*; do
+    mkdir "Split"
+    split -l 250 "../ports.txt" "Split/"
+    for file in Split/*; do
         gowitness file -X 2560 -Y 1440 -F -f "$file" -t 1
         sudo rm -rf /tmp/snap-private-tmp/snap.chromium/tmp/chromedp-runner*/
     done
     gowitness report export -f "report.zip"
     unzip "report.zip"
     mv "gowitness" "Report"
-    rm -rf "http.txt" "https.txt" "report.zip" "http-Split/" "https-Split/"
+    rm -rf "report.zip" "Split/"
     cd ..
 else
     echo "Skipping GoWitness Ports as there are no open ports or useful IPs."
