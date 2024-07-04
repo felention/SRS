@@ -22,9 +22,9 @@ Chromium 128.0.6574.0
 ## Notes
 - This relies on you to set up the required tools
 - SRS is primarily designed to be ran inside a Screen session for better productivity
-- I run a check to see what ISP owns the IPs that are about to be port scanned. This not only helps to prevent false positives (Cloudflare has every port open), but it also stops time being wasted on things like WAFs and shared hosting. More can be added on line `114` using `; /*HOST*/Id`
-- Subzy fingerprints for Akamai is broken leading to false positives. SRS will check if the fingerprints file exists and if Akamai is in the fingerprints. If it is, it will remove that section.
-- Ubuntu installs certain packages through Snap, including Chromium. The Chrome runners for that are about 11MB each which can easily fill up your disk. Additionally, some screenshots will be skipped. I recommend downloading the latest binary yourself with the link for Chromium itself above. Change the Chrome paths to your binary on lines `69` & `145`. The non-Snap runners only take about 12-16KB each and don't require privileges to delete the folders.
+- I run a check to see what ISP owns the IPs that are about to be port scanned. This not only helps to prevent false positives (Cloudflare has every port open), but it also stops time being wasted on things like WAFs and shared hosting. More can be added on line `176` using `; /*HOST*/Id`
+- Subzy fingerprints for some targets are broken, leading to false positives. SRS will check if the fingerprints file exists and if the broken ones are in the fingerprints. If it is, it will remove that section.
+- Ubuntu installs certain packages through Snap, including Chromium. The Chrome runners for that are about 11MB each which can easily fill up your disk. Additionally, some screenshots will be skipped. I recommend downloading the latest binary yourself with the link for Chromium itself above. Change the Chrome paths to your binary on lines `69` & `205`. The non-Snap runners only take about 12-16KB each and don't require privileges to delete the folders.
 - If you're using the Snap version, run [srs-snap.sh](https://github.com/felention/SRS/blob/main/srs-snap.sh) instead. This will split the files for GoWitness into 250 lines making it a total of 5.5GB (This is because GoWitness does both http and https unless specified).
 
 ## Required
@@ -37,6 +37,7 @@ Chromium 128.0.6574.0
 - If you're using Chromium Snap, there will be issues with GoWitness not taking screenshots for certain subdomains, therefore leaving out valid targets. This can be fixed by using the latest binary from [Chromium.org](https://www.chromium.org/).
 
 ## To be added
+- Replace Subzy or add fingerprint updater
 - Whois - This will check if a domain exists before starting SRS. This is just in-case there is a typo when typing in the target.
 - States - States will allow you to continue where you left off if you're performing SRS outside of a screen session, or if there is an abrupt end, such as a crash.
 - Debugging - All this will do is save the whole output into a separate file. It will also save backups of files before they are overwritten or removed.
