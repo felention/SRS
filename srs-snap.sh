@@ -166,3 +166,15 @@ echo "Starting Archiving..."
 cd ..
 tar -zcvf "$1.tar.gz" "$1/"
 rm -rf "$1/"
+
+### Stats
+echo
+echo "Subfinder found:"
+echo "$subs subdomain(s)"
+echo
+echo "crtsh found:"
+echo "$crts subdomain(s)"
+echo
+echo "Masscan found:"
+echo "$masi open port(s) from $ispi IP address(es)"
+echo
