@@ -76,6 +76,67 @@ mv "gowitness" "Report"
 rm -rf "report.zip" "Split/"
 cd ..
 
+### Subzy Fingerprint Check
+echo "Starting Subzy Fingerprint Check..."
+sfl="$HOME/subzy/fingerprints.json"
+if [[ ! -f "$sfl" ]]; then
+    subzy update
+fi
+if [[ -n "$(grep "Akamai" $sfl)" ]]; then
+    sfs="$(grep -n "Akamai" $sfl | sed 's/^\([0-9]*\):.*/\1/')"
+    sfe=$((sfs+8))
+    sfs=$((sfs-1))
+    sed -i "${sfs},${sfe}d" $sfl
+fi
+if [[ -n "$(grep "Firebase" $sfl)" ]]; then
+    sfs="$(grep -n "Firebase" $sfl | sed 's/^\([0-9]*\):.*/\1/')"
+    sfe=$((sfs+8))
+    sfs=$((sfs-1))
+    sed -i "${sfs},${sfe}d" $sfl
+fi
+if [[ -n "$(grep "Instapage" $sfl)" ]]; then
+    sfs="$(grep -n "Instapage" $sfl | sed 's/^\([0-9]*\):.*/\1/')"
+    sfe=$((sfs+8))
+    sfs=$((sfs-1))
+    sed -i "${sfs},${sfe}d" $sfl
+fi
+if [[ -n "$(grep "Gitlab" $sfl)" ]]; then
+    sfs="$(grep -n "Gitlab" $sfl | sed 's/^\([0-9]*\):.*/\1/')"
+    sfe=$((sfs+8))
+    sfs=$((sfs-1))
+    sed -i "${sfs},${sfe}d" $sfl
+fi
+if [[ -n "$(grep "Key CDN" $sfl)" ]]; then
+    sfs="$(grep -n "Key CDN" $sfl | sed 's/^\([0-9]*\):.*/\1/')"
+    sfe=$((sfs+8))
+    sfs=$((sfs-1))
+    sed -i "${sfs},${sfe}d" $sfl
+fi
+if [[ -n "$(grep "Sendgrid" $sfl)" ]]; then
+    sfs="$(grep -n "Sendgrid" $sfl | sed 's/^\([0-9]*\):.*/\1/')"
+    sfe=$((sfs+8))
+    sfs=$((sfs-1))
+    sed -i "${sfs},${sfe}d" $sfl
+fi
+if [[ -n "$(grep "Smugsmug" $sfl)" ]]; then
+    sfs="$(grep -n "Smugsmug" $sfl | sed 's/^\([0-9]*\):.*/\1/')"
+    sfe=$((sfs+8))
+    sfs=$((sfs-1))
+    sed -i "${sfs},${sfe}d" $sfl
+fi
+if [[ -n "$(grep "Squarespace" $sfl)" ]]; then
+    sfs="$(grep -n "Squarespace" $sfl | sed 's/^\([0-9]*\):.*/\1/')"
+    sfe=$((sfs+8))
+    sfs=$((sfs-1))
+    sed -i "${sfs},${sfe}d" $sfl
+fi
+if [[ -n "$(grep "WP Engine" $sfl)" ]]; then
+    sfs="$(grep -n "WP Engine" $sfl | sed 's/^\([0-9]*\):.*/\1/')"
+    sfe=$((sfs+8))
+    sfs=$((sfs-1))
+    sed -i "${sfs},${sfe}d" $sfl
+fi
+
 ### Subzy
 echo "Starting Subzy..."
 subzy r --output "subzy.txt" --targets "subdomains.txt" --vuln
