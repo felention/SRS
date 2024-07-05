@@ -1,5 +1,11 @@
 #!/bin/bash
 
+### Print own hash value
+if [[ "${1,,}" == "hash" ]]; then
+    echo "SHA1 for this file is $(sha1sum $0 | awk '{print $1}')"
+    exit
+fi
+
 ### Check if there is an input
 if [[ -z "$1" ]]; then
     echo "No Target set"
@@ -41,23 +47,33 @@ rm subfinder.txt
 
 ### crtsh
 echo "Starting crtsh..."
+crtc=0
 curl -s "https://crt.sh/?q=%25.$1&output=json" > crt.txt
-while [[ -z "$(grep "$line" crt.txt)" && -n "$(grep "error\|\[]" crt.txt)" ]]; do
+while [[ -z "$(grep "$1" crt.txt)" && -n "$(grep "error\|\[]\|502 Bad Gateway" crt.txt)" ]]; do
     sleep 5
-    curl -s "https://crt.sh/?q=%25.$line&output=json" > crt.txt
+    curl -s "https://crt.sh/?q=%25.$1&output=json" > crt.txt
+    crtc=$((crtc+1))
+    if [[ $crtc -eq 5 ]]; then
+        echo "Skipping crtsh due to too many errors"
+        rm crt.txt
+        crtf=1
+        break
+    fi
 done
-jq -r '.[].common_name' crt.txt > crt2.txt
-jq -r '.[].name_value' crt.txt >> crt2.txt
-sed -i '/*/d' crt2.txt
-grep "$1" crt2.txt > crt.txt
-awk -i inplace '!a[$0]++' crt.txt
-crts="$(cat crt.txt | wc -l)"
-cat crt.txt >> subdomains.txt
-while read -r line; do
-    dig +short "$line" A >> ips.txt
-done < crt.txt
-sed -i 's/.*\.$//g; /^$/d' ips.txt
-rm crt.txt crt2.txt
+if [[ $crtf -ne 1 ]]; then
+    jq -r '.[].common_name' crt.txt > crt2.txt
+    jq -r '.[].name_value' crt.txt >> crt2.txt
+    sed -i '/*/d' crt2.txt
+    grep "$1" crt2.txt > crt.txt
+    awk -i inplace '!a[$0]++' crt.txt
+    crts="$(cat crt.txt | wc -l)"
+    cat crt.txt >> subdomains.txt
+    while read -r line; do
+        dig +short "$line" A >> ips.txt
+    done < crt.txt
+    sed -i 's/.*\.$//g; /^$/d' ips.txt
+    rm crt.txt crt2.txt
+fi
 
 ### Remove duplicates
 awk -i inplace '!a[$0]++' subdomains.txt
