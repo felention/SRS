@@ -22,10 +22,11 @@ Chromium 128.0.6574.0
 ## Notes
 - This relies on you to set up the required tools
 - SRS is primarily designed to be ran inside a Screen session for better productivity
-- I run a check to see what ISP owns the IPs that are about to be port scanned. This not only helps to prevent false positives (Cloudflare has every port open), but it also stops time being wasted on things like WAFs and shared hosting. More can be added on line `176` using `; /*HOST*/Id`
+- I run a check to see what ISP owns the IPs that are about to be port scanned. This not only helps to prevent false positives (Cloudflare has every port open), but it also stops time being wasted on things like WAFs and shared hosting. More can be added on line `192` using `; /*HOST*/Id`
 - Subzy fingerprints for some targets are broken, leading to false positives. SRS will check if the fingerprints file exists and if the broken ones are in the fingerprints. If it is, it will remove that section.
-- Ubuntu installs certain packages through Snap, including Chromium. The Chrome runners for that are about 11MB each which can easily fill up your disk. Additionally, some screenshots will be skipped. I recommend downloading the latest binary yourself with the link for Chromium itself above. Change the Chrome paths to your binary on lines `69` & `205`. The non-Snap runners only take about 12-16KB each and don't require privileges to delete the folders.
+- Ubuntu installs certain packages through Snap, including Chromium. The Chrome runners for that are about 11MB each which can easily fill up your disk. Additionally, some screenshots will be skipped. I recommend downloading the latest binary yourself with the link for Chromium itself above. Change the Chrome paths to your binary on lines `86` & `221`. The non-Snap runners only take about 12-16KB each and don't require privileges to delete the folders.
 - If you're using the Snap version, run [srs-snap.sh](https://github.com/felention/SRS/blob/main/srs-snap.sh) instead. This will split the files for GoWitness into 250 lines making it a total of 5.5GB (This is because GoWitness does both http and https unless specified).
+- Running `./srs.sh hash` will produce a SHA1 hash of the script. The current hash is: `87267c00d7002cf79a4d3741ba2730b28a403423`
 
 ## Required
 **Adding the below to your sudoers file.**
