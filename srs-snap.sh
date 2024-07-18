@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ### Print own hash value
-if [[ "${1,,}" == "hash" ]]; then
+if [[ "${1,,}" =~ ^(h|hash)$ ]]; then
     echo "SHA1 for this file is $(sha1sum $0 | awk '{print $1}')"
     exit
 fi
@@ -15,7 +15,6 @@ fi
 ### Set tool and target location
 out="$HOME/srs"
 tout="$out/$1"
-mkdir -p "$tout"
 
 ### If archive of target exists, ask to scan again
 if [[ -f "$out/$1.tar.gz" ]]; then
@@ -34,7 +33,9 @@ if [[ -f "$out/$1.tar.gz" ]]; then
     fi
 fi
 
-### Go to target directory
+
+### Make and go to target directory
+mkdir -p "$tout"
 cd "$tout"
 
 ### Subfinder
@@ -85,7 +86,7 @@ mkdir "GoWitness-Subdomains" && cd "$_"
 mkdir "Split"
 split -l 250 "../subdomains.txt" "Split/"
 for file in Split/*; do
-    gowitness file -X 2560 -Y 1440 -F -f "$file" -t 1
+    gowitness file -X 1920 -Y 1080 -F -f "$file"
     sudo rm -rf /tmp/snap-private-tmp/snap.chromium/tmp/chromedp-runner*/
 done
 gowitness report export -f "report.zip"
@@ -216,9 +217,6 @@ if [[ -s scan.txt ]]; then
     awk -i inplace '!a[$0]++' ports.txt
 else
     echo "Skipping Masscan and Port Parse as IPs aren't useful."
-    if [[ ! -s ports.txt ]]; then
-        rm ports.txt
-    fi
 fi
 rm scan.txt
 
@@ -229,7 +227,7 @@ if [[ -f ports.txt && -s ports.txt ]]; then
     mkdir "Split"
     split -l 250 "../ports.txt" "Split/"
     for file in Split/*; do
-        gowitness file -X 2560 -Y 1440 -F -f "$file" -t 1
+        gowitness file -X 1920 -Y 1080 -F -f "$file"
         sudo rm -rf /tmp/snap-private-tmp/snap.chromium/tmp/chromedp-runner*/
     done
     gowitness report export -f "report.zip"
