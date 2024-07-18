@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ### Print own hash value
-if [[ "${1,,}" == "hash" ]]; then
+if [[ "${1,,}" =~ ^(h|hash)$ ]]; then
     echo "SHA1 for this file is $(sha1sum $0 | awk '{print $1}')"
     exit
 fi
@@ -15,7 +15,6 @@ fi
 ### Set tool and target location
 out="$HOME/srs"
 tout="$out/$1"
-mkdir -p "$tout"
 
 ### If archive of target exists, ask to scan again
 if [[ -f "$out/$1.tar.gz" ]]; then
@@ -34,8 +33,12 @@ if [[ -f "$out/$1.tar.gz" ]]; then
     fi
 fi
 
-### Go to target directory
+### Make and go to target directory
+mkdir -p "$tout"
 cd "$tout"
+
+### Set Chromium path
+cbp="$HOME/chromium/chromium"
 
 ### Subfinder
 echo "Starting Subfinder..."
@@ -82,11 +85,11 @@ awk -i inplace '!a[$0]++' ips.txt
 ### GoWitness Subdomains
 echo "Starting GoWitness Subdomains..."
 mkdir "GoWitness-Subdomains" && cd "$_"
-gowitness file -X 2560 -Y 1440 -F -f "../subdomains.txt" -t 1 --chrome-path "$HOME/chrome/chrome"
+gowitness file -X 1920 -Y 1080 -F -f "../subdomains.txt" --chrome-path "$cbp"
 gowitness report export -f "report.zip"
 unzip "report.zip"
 mv "gowitness" "Report"
-rm -rf "report.zip"
+rm -rf "report.zip" /tmp/chromedp-runner*
 cd ..
 
 ### Subzy Fingerprint Check
@@ -218,11 +221,11 @@ if [[ -f ports.txt && -s ports.txt ]]; then
     ### GoWitness Ports
     echo "Starting GoWitness Ports..."
     mkdir "GoWitness-Ports" && cd "$_"
-    gowitness file -X 2560 -Y 1440 -F -f "../ports.txt" -t 1 --chrome-path "$HOME/chrome/chrome"
+    gowitness file -X 1920 -Y 1080 -F -f "../ports.txt" --chrome-path "$cbp"
     gowitness report export -f "report.zip"
     unzip "report.zip"
     mv "gowitness" "Report"
-    rm -rf "report.zip"
+    rm -rf "report.zip" /tmp/chromedp-runner*
     cd ..
 else
     echo "Skipping GoWitness Ports as there are no open ports or useful IPs."
@@ -235,7 +238,7 @@ fi
 echo "Starting Archiving..."
 cd ..
 tar -zcvf "$1.tar.gz" "$1/"
-rm -rf "$1/" /tmp/chromedp-runner*
+rm -rf "$1/"
 
 ### Stats
 echo
