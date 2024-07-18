@@ -26,7 +26,7 @@ Chromium 128.0.6574.0
 - Subzy fingerprints for some targets are broken, leading to false positives. SRS will check if the fingerprints file exists and if the broken ones are in the fingerprints. If it is, it will remove that section.
 - Ubuntu installs certain packages through Snap, including Chromium. The Chrome runners for that are about 11MB each which can easily fill up your disk. Additionally, some screenshots will be skipped. I recommend downloading the latest binary yourself with the link for Chromium itself above. Change the Chrome paths to your binary on line `41`. The non-Snap runners only take about 12-16KB each and don't require privileges to delete the folders.
 - If you're using the Snap version, run [srs-snap.sh](https://github.com/felention/SRS/blob/main/srs-snap.sh) instead. This will split the files for GoWitness into 250 lines making it a total of 5.5GB (This is because GoWitness does both http and https unless specified).
-- Running `./srs.sh hash` will produce a SHA1 hash of the script. The current hash is: `75e2a73b617d578eee724ec02b2e0022d668382f`
+- Running `./srs.sh hash` will produce a SHA1 hash of the script. The current hash is: `6939f839ce138ecfd703ff3fae144c3e122cf521`
 
 ## Required
 **Adding the below to your sudoers file.**
