@@ -38,7 +38,8 @@ Chromium 128.0.6574.0
 - If you're using Chromium Snap, there will be issues with GoWitness not taking screenshots for certain subdomains, therefore leaving out valid targets. This can be fixed by using the latest binary from [Chromium.org](https://www.chromium.org/).
 
 ## To be added
-- Replace Subzy or add fingerprint updater
+- Web interface - This is so you can quickly check without connecting to your box. This will be another .sh file (hopefully) that will be executed so it's a choice.
+- Replace Subzy
 - Whois - This will check if a domain exists before starting SRS. This is just in-case there is a typo when typing in the target.
 - States - States will allow you to continue where you left off if you're performing SRS outside of a screen session, or if there is an abrupt end, such as a crash.
 - Debugging - All this will do is save the whole output into a separate file. It will also save backups of files before they are overwritten or removed.
