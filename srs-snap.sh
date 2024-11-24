@@ -1,5 +1,7 @@
 #!/bin/bash
 
+###### This will no longer be updated
+
 ### Print own hash value
 if [[ "${1,,}" =~ ^(h|hash)$ ]]; then
     echo "SHA1 for this file is $(sha1sum $0 | awk '{print $1}')"
