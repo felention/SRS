@@ -1,8 +1,13 @@
 #!/bin/bash
 
-### Print own hash value
-if [[ "${1,,}" =~ ^(h|hash)$ ]]; then
-    echo "SHA1 for this file is $(sha1sum $0 | awk '{print $1}')"
+### Print version and check for new version
+if [[ "${1,,}" =~ ^(v|version)$ ]]; then
+    cvr='1'
+    echo "Version $cvr"
+    nvr="$(curl -s 'https://raw.githubusercontent.com/felention/SRS/refs/heads/main/version')"
+    if (( $(echo "$nvr > $cvr" | bc -l) )); then
+        echo "Version $nvr is available."
+    fi
     exit
 fi
 
@@ -38,21 +43,21 @@ mkdir -p "$tout"
 cd "$tout"
 
 ### Set Chromium path
-cbp="$HOME/chromium/chromium"
+cbp="$HOME/chrome-linux/chrome"
 
 ### Subfinder
 echo "Starting Subfinder..."
 subfinder -all -o "subfinder.txt" -ip -active -d "$1"
 cat "subfinder.txt" | sed 's/,.*//g' > subdomains.txt
 cat "subfinder.txt" | awk -F ',' '{print $2}' > ips.txt
-subs="$(cat subdomains.txt | wc -l)"
+subs="$(wc -l < subdomains.txt)"
 rm subfinder.txt
 
 ### crtsh
 echo "Starting crtsh..."
 crtc=0
 curl -s "https://crt.sh/?q=%25.$1&output=json" > crt.txt
-while [[ -z "$(grep "$1" crt.txt)" && -n "$(grep "error\|\[]\|502 Bad Gateway" crt.txt)" ]]; do
+while [[ -z "$(grep "$1" crt.txt)" && -n "$(grep "error\|\[]\|502 Bad Gateway\|404 Not Found" crt.txt)" ]]; do
     sleep 5
     curl -s "https://crt.sh/?q=%25.$1&output=json" > crt.txt
     crtc=$((crtc+1))
@@ -60,6 +65,7 @@ while [[ -z "$(grep "$1" crt.txt)" && -n "$(grep "error\|\[]\|502 Bad Gateway" c
         echo "Skipping crtsh due to too many errors"
         rm crt.txt
         crtf=1
+        crts=0
         break
     fi
 done
@@ -69,7 +75,7 @@ if [[ $crtf -ne 1 ]]; then
     sed -i '/*/d' crt2.txt
     grep "$1" crt2.txt > crt.txt
     awk -i inplace '!a[$0]++' crt.txt
-    crts="$(cat crt.txt | wc -l)"
+    crts="$(wc -l < crt.txt)"
     cat crt.txt >> subdomains.txt
     while read -r line; do
         dig +short "$line" A >> ips.txt
@@ -85,84 +91,12 @@ awk -i inplace '!a[$0]++' ips.txt
 ### GoWitness Subdomains
 echo "Starting GoWitness Subdomains..."
 mkdir "GoWitness-Subdomains" && cd "$_"
-gowitness file -X 1920 -Y 1080 -F -f "../subdomains.txt" --chrome-path "$cbp"
-gowitness report export -f "report.zip"
-unzip "report.zip"
-mv "gowitness" "Report"
-rm -rf "report.zip" /tmp/chromedp-runner*
+gowitness scan file -f "../subdomains.txt" --chrome-path "$cbp" --driver gorod --write-db --screenshot-fullpage -T 20 --log-scan-errors
+gwss="$(find screenshots/ -maxdepth 1 -type f | wc -l)"
+gowitness report generate --zip-name "report.zip"
+unzip "report.zip" -d "Report"
+rm -rf "report.zip" /tmp/leakless-amd64-* /tmp/gowitness-v3-gorod-* /tmp/.org.chromium.Chromium.*
 cd ..
-
-### Subzy Fingerprint Check
-echo "Starting Subzy Fingerprint Check..."
-sfl="$HOME/subzy/fingerprints.json"
-if [[ ! -f "$sfl" ]]; then
-    subzy update
-fi
-if [[ -n "$(grep "Akamai" $sfl)" ]]; then
-    sfs="$(grep -n "Akamai" $sfl | sed 's/^\([0-9]*\):.*/\1/')"
-    sfe=$((sfs+8))
-    sfs=$((sfs-1))
-    sed -i "${sfs},${sfe}d" $sfl
-fi
-if [[ -n "$(grep "Firebase" $sfl)" ]]; then
-    sfs="$(grep -n "Firebase" $sfl | sed 's/^\([0-9]*\):.*/\1/')"
-    sfe=$((sfs+8))
-    sfs=$((sfs-1))
-    sed -i "${sfs},${sfe}d" $sfl
-fi
-if [[ -n "$(grep "Instapage" $sfl)" ]]; then
-    sfs="$(grep -n "Instapage" $sfl | sed 's/^\([0-9]*\):.*/\1/')"
-    sfe=$((sfs+8))
-    sfs=$((sfs-1))
-    sed -i "${sfs},${sfe}d" $sfl
-fi
-if [[ -n "$(grep "Gitlab" $sfl)" ]]; then
-    sfs="$(grep -n "Gitlab" $sfl | sed 's/^\([0-9]*\):.*/\1/')"
-    sfe=$((sfs+8))
-    sfs=$((sfs-1))
-    sed -i "${sfs},${sfe}d" $sfl
-fi
-if [[ -n "$(grep "Key CDN" $sfl)" ]]; then
-    sfs="$(grep -n "Key CDN" $sfl | sed 's/^\([0-9]*\):.*/\1/')"
-    sfe=$((sfs+8))
-    sfs=$((sfs-1))
-    sed -i "${sfs},${sfe}d" $sfl
-fi
-if [[ -n "$(grep "Sendgrid" $sfl)" ]]; then
-    sfs="$(grep -n "Sendgrid" $sfl | sed 's/^\([0-9]*\):.*/\1/')"
-    sfe=$((sfs+8))
-    sfs=$((sfs-1))
-    sed -i "${sfs},${sfe}d" $sfl
-fi
-if [[ -n "$(grep "Smugsmug" $sfl)" ]]; then
-    sfs="$(grep -n "Smugsmug" $sfl | sed 's/^\([0-9]*\):.*/\1/')"
-    sfe=$((sfs+8))
-    sfs=$((sfs-1))
-    sed -i "${sfs},${sfe}d" $sfl
-fi
-if [[ -n "$(grep "Squarespace" $sfl)" ]]; then
-    sfs="$(grep -n "Squarespace" $sfl | sed 's/^\([0-9]*\):.*/\1/')"
-    sfe=$((sfs+8))
-    sfs=$((sfs-1))
-    sed -i "${sfs},${sfe}d" $sfl
-fi
-if [[ -n "$(grep "WP Engine" $sfl)" ]]; then
-    sfs="$(grep -n "WP Engine" $sfl | sed 's/^\([0-9]*\):.*/\1/')"
-    sfe=$((sfs+8))
-    sfs=$((sfs-1))
-    sed -i "${sfs},${sfe}d" $sfl
-fi
-
-### Subzy
-echo "Starting Subzy..."
-subzy r --output "subzy.txt" --targets "subdomains.txt" --vuln
-if [[ "$(cat "subzy.txt")" == "null" ]]; then
-    rm "subzy.txt"
-fi
-subzy r --https --output "subzy-ssl.txt" --targets "subdomains.txt" --vuln
-if [[ "$(cat "subzy-ssl.txt")" == "null" ]]; then
-    rm "subzy-ssl.txt"
-fi
 
 ### ISP Prep
 echo "Starting ISP Prep..."
@@ -204,8 +138,8 @@ if [[ -s scan.txt ]]; then
         rate=25000000
     fi
     sudo masscan -iL scan.txt -p 0-65535 -oX ports.txt --rate "$rate"
-    ispi="$(cat scan.txt | wc -l)"
-    masi="$(cat ports.txt | wc -l)"
+    ipsi="$(wc -l < scan.txt)"
+    masi="$(wc -l < ports.txt)"
 
     ### Port Parse
     echo "Starting Port Parse..."
@@ -214,22 +148,25 @@ if [[ -s scan.txt ]]; then
     awk -i inplace '!a[$0]++' ports.txt
 else
     echo "Skipping Masscan and Port Parse as IPs aren't useful."
+    ipsi=0
+    masi=0
 fi
 rm scan.txt
 
-if [[ -f ports.txt && -s ports.txt ]]; then
+if [[ -s ports.txt ]]; then
     ### GoWitness Ports
     echo "Starting GoWitness Ports..."
     mkdir "GoWitness-Ports" && cd "$_"
-    gowitness file -X 1920 -Y 1080 -F -f "../ports.txt" --chrome-path "$cbp"
-    gowitness report export -f "report.zip"
-    unzip "report.zip"
-    mv "gowitness" "Report"
-    rm -rf "report.zip" /tmp/chromedp-runner*
+    gowitness scan file -f "../ports.txt" --chrome-path "$cbp" --driver gorod --write-db --screenshot-fullpage -T 20 --log-scan-errors
+    gwps="$(find screenshots/ -maxdepth 1 -type f | wc -l)"
+    gowitness report generate --zip-name "report.zip"
+    unzip "report.zip" -d "Report"
+    rm -rf "report.zip" /tmp/leakless-amd64-* /tmp/gowitness-v3-gorod-* /tmp/.org.chromium.Chromium.*
     cd ..
 else
     echo "Skipping GoWitness Ports as there are no open ports or useful IPs."
-    if [[ ! -s ports.txt ]]; then
+    gwps=0
+    if [[ -e ports.txt ]]; then
         rm ports.txt
     fi
 fi
@@ -249,5 +186,11 @@ echo "crtsh found:"
 echo "$crts subdomain(s)"
 echo
 echo "Masscan found:"
-echo "$masi open port(s) from $ispi IP address(es)"
+echo "$masi open port(s) from $ipsi IP address(es)"
+echo
+echo "GW-Sub screenshotted:"
+echo "$gwss screenshot(s)"
+echo
+echo "GW-Ports screenshotted:"
+echo "$gwps screenshot(s)"
 echo
