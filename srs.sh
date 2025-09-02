@@ -2,7 +2,7 @@
 
 ### Print version and check for new version
 if [[ "${1,,}" =~ ^(v|version)$ ]]; then
-    cvr='1'
+    cvr='2'
     echo "Version $cvr"
     nvr="$(curl -s 'https://raw.githubusercontent.com/felention/SRS/refs/heads/main/version')"
     if (( $(echo "$nvr > $cvr" | bc -l) )); then
@@ -15,11 +15,16 @@ fi
 if [[ -z "$1" ]]; then
     echo "No Target set"
     exit
+elif [[ -z "$(dig +short SOA "$1")" ]]; then
+    echo "Domain unresolvable. Either the domain has no SOA or is unregistered."
+    exit
 fi
 
 ### Set tool and target location
 out="$HOME/srs"
 tout="$out/$1"
+run="$out/web.sh"
+runl="$out/web"
 
 ### If archive of target exists, ask to scan again
 if [[ -f "$out/$1.tar.gz" ]]; then
@@ -45,16 +50,45 @@ cd "$tout"
 ### Set Chromium path
 cbp="$HOME/chrome-linux/chrome"
 
+### Enable debugging
+if [[ "${2,,}" =~ ^(d|debug)$ ]]; then
+    dbg=1
+    echo "Debugging enabled."
+    mkdir "debug"
+    exec > >(tee -ia debug/terminal.txt) 2>&1
+fi
+
+### Check if Web Interface script exists for later
+if [[ -f "$run" ]]; then
+    web=1
+    mkdir -p "$runl"
+    echo "$$" > "$runl/srs.pid"
+    if [[ "$dbg" == 1 ]]; then
+        bash "$run" start "$1" 1
+    else
+        bash "$run" start "$1"
+    fi
+fi
+
 ### Subfinder
 echo "Starting Subfinder..."
-subfinder -all -o "subfinder.txt" -ip -active -d "$1"
-cat "subfinder.txt" | sed 's/,.*//g' > subdomains.txt
-cat "subfinder.txt" | awk -F ',' '{print $2}' > ips.txt
+if [[ "$web" == 1 ]]; then
+    bash "$run" 1
+fi
+subfinder -all -o subfinder.txt -ip -active -d "$1"
+cat subfinder.txt | sed 's/,.*//g' > subdomains.txt
+cat subfinder.txt | awk -F ',' '{print $2}' > ips.txt
 subs="$(wc -l < subdomains.txt)"
+if [[ "$dbg" == 1 ]]; then
+    cp subfinder.txt debug/
+fi
 rm subfinder.txt
 
 ### crtsh
 echo "Starting crtsh..."
+if [[ "$web" == 1 ]]; then
+    bash "$run" 2
+fi
 crtc=0
 curl -s "https://crt.sh/?q=%25.$1&output=json" > crt.txt
 while [[ -z "$(grep "$1" crt.txt)" && -n "$(grep "error\|\[]\|502 Bad Gateway\|404 Not Found" crt.txt)" ]]; do
@@ -70,6 +104,9 @@ while [[ -z "$(grep "$1" crt.txt)" && -n "$(grep "error\|\[]\|502 Bad Gateway\|4
     fi
 done
 if [[ $crtf -ne 1 ]]; then
+    if [[ "$dbg" == 1 ]]; then
+        cp crt.txt debug/
+    fi
     jq -r '.[].common_name' crt.txt > crt2.txt
     jq -r '.[].name_value' crt.txt >> crt2.txt
     sed -i '/*/d' crt2.txt
@@ -90,12 +127,18 @@ awk -i inplace '!a[$0]++' ips.txt
 
 ### GoWitness Subdomains
 echo "Starting GoWitness Subdomains..."
+if [[ "$web" == 1 ]]; then
+    bash "$run" 3
+fi
 mkdir "GoWitness-Subdomains" && cd "$_"
-gowitness scan file -f "../subdomains.txt" --chrome-path "$cbp" --driver gorod --write-db --screenshot-fullpage -T 20 --log-scan-errors
+gowitness scan file -f ../subdomains.txt --chrome-path "$cbp" --driver gorod --write-db --screenshot-fullpage -T 20 --log-scan-errors
 gwss="$(find screenshots/ -maxdepth 1 -type f | wc -l)"
-gowitness report generate --zip-name "report.zip"
-unzip "report.zip" -d "Report"
-rm -rf "report.zip" /tmp/leakless-amd64-* /tmp/gowitness-v3-gorod-* /tmp/.org.chromium.Chromium.*
+gowitness report generate --zip-name report.zip
+unzip -q report.zip -d "Report"
+if [[ "$dbg" == 1 ]]; then
+    cp report.zip ../debug/GWS_report.zip
+fi
+rm -rf report.zip /tmp/leakless-amd64-* /tmp/gowitness-v3-gorod-* /tmp/.org.chromium.Chromium.*
 cd ..
 
 ### ISP Prep
@@ -110,6 +153,9 @@ done
 
 ### ISP Check
 echo "Starting ISP Check..."
+if [[ "$web" == 1 ]]; then
+    bash "$run" 4
+fi
 count=0
 for file in ip-Split/*; do
     curl -s http://ip-api.com/batch?fields=query,isp --data "$(cat $file)" >> isp.txt
@@ -132,6 +178,9 @@ sed -i 's/.* //g' scan.txt
 if [[ -s scan.txt ]]; then
     ### Masscan
     echo "Starting Masscan..."
+    if [[ "$web" == 1 ]]; then
+        bash "$run" 5
+    fi
     rate="$(cat scan.txt | wc -l)"
     rate=$((rate*1000))
     if [[ "$rate" -gt "25000000" ]]; then
@@ -148,6 +197,9 @@ if [[ -s scan.txt ]]; then
     awk -i inplace '!a[$0]++' ports.txt
 else
     echo "Skipping Masscan and Port Parse as IPs aren't useful."
+    if [[ "$web" == 1 ]]; then
+        bash "$run" 5 1
+    fi
     ipsi=0
     masi=0
 fi
@@ -156,15 +208,24 @@ rm scan.txt
 if [[ -s ports.txt ]]; then
     ### GoWitness Ports
     echo "Starting GoWitness Ports..."
+    if [[ "$web" == 1 ]]; then
+        bash "$run" 6
+    fi
     mkdir "GoWitness-Ports" && cd "$_"
     gowitness scan file -f "../ports.txt" --chrome-path "$cbp" --driver gorod --write-db --screenshot-fullpage -T 20 --log-scan-errors
     gwps="$(find screenshots/ -maxdepth 1 -type f | wc -l)"
     gowitness report generate --zip-name "report.zip"
-    unzip "report.zip" -d "Report"
-    rm -rf "report.zip" /tmp/leakless-amd64-* /tmp/gowitness-v3-gorod-* /tmp/.org.chromium.Chromium.*
+    unzip -q report.zip -d "Report"
+    if [[ "$dbg" == 1 ]]; then
+        cp report.zip ../debug/GWP_report.zip
+    fi
+    rm -rf report.zip /tmp/leakless-amd64-* /tmp/gowitness-v3-gorod-* /tmp/.org.chromium.Chromium.*
     cd ..
 else
     echo "Skipping GoWitness Ports as there are no open ports or useful IPs."
+    if [[ "$web" == 1 ]]; then
+        bash "$run" 6 1
+    fi
     gwps=0
     if [[ -e ports.txt ]]; then
         rm ports.txt
@@ -173,9 +234,15 @@ fi
 
 ### Archiving
 echo "Starting Archiving..."
+if [[ "$web" == 1 ]]; then
+    bash "$run" 7
+fi
 cd ..
 tar -zcvf "$1.tar.gz" "$1/"
-rm -rf "$1/"
+if [[ "$web" == 1 ]]; then
+    bash "$run" 8
+fi
+rm -rf "$1/" "$runl/srs.pid"
 
 ### Stats
 echo
