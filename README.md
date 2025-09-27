@@ -20,9 +20,9 @@ Bash 5
 - This relies on you to set up the required tools.
 - It's important to note that this is may not work on some systems. For example, certain Bash syntax won't work on other shells like ZSH, or certain tools like sed arguments might not work on non-POSIX systems.
 - SRS is primarily designed to be ran inside a Screen session for better productivity. This also prevents session drops from ending the process.
-- The Chromium binary location can be changed on line `51`. This is just the better option overall, especially on Ubuntu thanks to Snap. `--chrome-path "$cbp"` can be removed on other distros if Chromium/Chrome is installed via the package manager, but this is untested and could fail.
+- The Chromium binary location can be changed on line `59`. This is just the better option overall, especially on Ubuntu thanks to Snap. `--chrome-path "$cbp"` can be removed on other distros if Chromium/Chrome is installed via the package manager, but this is untested and could fail.
 - This is not advised to use on Ubuntu 23.10 or above thanks to restricted unprivileged user namespaces. This is just to shave down setup time and configuration system side.
-- This runs a check to see what ISP owns the IPs that are about to be port scanned. This not only helps to prevent false positives (Cloudflare has every port open), but it also stops time being wasted on things like WAFs and shared hosting. More can be added on line `175` using `; /*HOST*/Id`.
+- This runs a check to see what ISP owns the IPs that are about to be port scanned. This not only helps to prevent false positives (Cloudflare has every port open), but it also stops time being wasted on things like WAFs and shared hosting. More can be added on line `196` using `; /*HOST*/Id`.
 - Running `./srs.sh v` will output the current version. It will then check for a new version.
 - Running `.srs.sh TARGET d` will enable debugging. This copies the whole terminal output and preserves files requiring a tool to re-run. This is useful for finding out what's causing an issue, especially in a screen session with a shorter scrollback buffer than the full output.
 - The web interface will need a constantly running HTTPD if you're using it with multiple SRS instances. For now, this will only be used for single runs. I recommend reading more in the `Required` section before using SRS.
