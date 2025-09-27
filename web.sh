@@ -36,29 +36,30 @@ if [[ "$1" == "start" ]]; then
 			    h3{margin:1rem}
 			    h4{margin-top:5rem}
 			    p{font-weight: bold;}
-			    #body {text-align:center}
+			    .body {text-align:center}
 			    .crash {display:none;padding:0}
-			    [id$="r"] span:before{content: "Waiting";color:#FF3B30}
-			    [id$="o"] span:before{content: "Skipped";color:#FF9500}
-			    [id$="a"] span:before{content: "Running";color:#FFD700}
-			    [id$="g"] span:before{content: "Complete";color:#00FF66}
+			    [id$="w"] span:before{content: "Waiting";color:#00BFFF}
+			    [id$="s"] span:before{content: "Skipped";color:#FF9500}
+			    [id$="c"] span:before{content: "Crashed";color:#FF3B30}
+			    [id$="r"] span:before{content: "Running";color:#FFD700}
+			    [id$="d"] span:before{content: "Complete";color:#00FF66}
 			    #r {color:#FF3B30}
 			    #g {color:#00FF66}
 			  </style>
 			</head>
 			<body>
 			  <h3>Debugging - <span id="r">Disabled</span></h3>
-			  <div id="body">
+			  <div class="body">
 			    <h1>¦¦target¦¦</h1>
 			    <p>Welcome to the SRS Web Interface. Here, you can see where the current running stage for SRS is.</p>
 			    <h1 class="crash" id="r">SRS CRASHED</h1>
-			    <h3 id="s1r">Subfinder - <span></span></h3>
-			    <h3 id="s2r">crt.sh - <span></span></h3>
-			    <h3 id="s3r">GoWitness Subdomains - <span></span></h3>
-			    <h3 id="s4r">ISP Check - <span></span></h3>
-			    <h3 id="s5r">Masscan - <span></span></h3>
-			    <h3 id="s6r">GoWitness Ports - <span></span></h3>
-			    <h3 id="s7r">Archiving - <span></span></h3>
+			    <h3 id="s1w">Subfinder - <span></span></h3>
+			    <h3 id="s2w">crt.sh - <span></span></h3>
+			    <h3 id="s3w">GoWitness Subdomains - <span></span></h3>
+			    <h3 id="s4w">ISP Check - <span></span></h3>
+			    <h3 id="s5w">Masscan - <span></span></h3>
+			    <h3 id="s6w">GoWitness Ports - <span></span></h3>
+			    <h3 id="s7w">Archiving - <span></span></h3>
 			    <h4>Last updated at: <pre></pre></h4>
 			  </div>
 			</body>
@@ -99,38 +100,50 @@ elif [[ "$1" == "crash" ]]; then
     update
     rm "$out/srs.pid"
 elif [[ "$1" == 1 ]]; then
-    sed -i 's/s1r/s1a/' "$outp"
+    sed -i 's/s1w/s1r/' "$outp"
     update
 elif [[ "$1" == 2 ]]; then
-    sed -i 's/s1a/s1g/;s/s2r/s2a/' "$outp"
+    sed -i 's/s1r/s1d/;s/s2w/s2r/' "$outp"
+    update
+elif [[ "$1" == 3 && "$2" == 1 ]]; then
+    sed -i 's/s2r/s2s/; s/s3w/s3r/' "$outp"
     update
 elif [[ "$1" == 3 ]]; then
-    sed -i 's/s2a/s2g/;s/s3r/s3a/' "$outp"
+    sed -i 's/s2r/s2d/;s/s3w/s3r/' "$outp"
+    update
+elif [[ "$1" == 4 && "$2" == 1 ]]; then
+    sed -i 's/s3r/s3c/;s/s4w/s4r/' "$outp"
     update
 elif [[ "$1" == 4 ]]; then
-    sed -i 's/s3a/s3g/;s/s4r/s4a/' "$outp"
+    sed -i 's/s3r/s3d/;s/s4w/s4r/' "$outp"
     update
 elif [[ "$1" == 5 && "$2" == 1 ]]; then
-    sed -i 's/s4a/s4g/;s/s5r/s5s/' "$outp"
+    sed -i 's/s4r/s4d/;s/s5w/s5s/' "$outp"
     update
 elif [[ "$1" == 5 ]]; then
-    sed -i 's/s4a/s4g/;s/s5r/s5a/' "$outp"
+    sed -i 's/s4r/s4d/;s/s5w/s5r/' "$outp"
     update
 elif [[ "$1" == 6 && "$2" == 1 ]]; then
-    sed -i 's/s5a/s5g/;s/s6r/s6s/' "$outp" 
+    sed -i 's/s5r/s5d/;s/s6w/s6s/' "$outp"
     update
 elif [[ "$1" == 6 ]]; then
-    sed -i 's/s5a/s5g/;s/s6r/s6a/' "$outp"
+    sed -i 's/s5r/s5d/;s/s6w/s6r/' "$outp"
+    update
+elif [[ "$1" == 7 && "$2" == 1 ]]; then
+    sed -i 's/s6r/s6c/;s/s7w/s7r/' "$outp"
     update
 elif [[ "$1" == 7 ]]; then
-    sed -i 's/s6a/s6g/;s/s7r/s7a/' "$outp"
+    sed -i 's/s6r/s6d/;s/s7w/s7r/' "$outp"
     update
 elif [[ "$1" == 8 ]]; then
-    sed -i 's/s7a/s7g/' "$outp"
+    sed -i 's/s7r/s7d/' "$outp"
+    sed -i '/refresh/d' "$outp"
     update
     touch "$out/.com"
     rm -f "$out/srs.pid"
 elif [[ "$1" == "stop" ]]; then
     kill "$(cat "$out/web.pid")"
     rm -f "$out/web.pid" "$out/.com" "$out/index.html"
+else
+    echo "No command made."
 fi
