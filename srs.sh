@@ -2,7 +2,7 @@
 
 ### Print version and check for new version
 if [[ "${1,,}" =~ ^(v|version)$ ]]; then
-    cvr='2'
+    cvr='2.1'
     echo "Version $cvr"
     nvr="$(curl -s 'https://raw.githubusercontent.com/felention/SRS/refs/heads/main/version')"
     if (( $(echo "$nvr > $cvr" | bc -l) )); then
@@ -42,6 +42,14 @@ if [[ -f "$out/$1.tar.gz" ]]; then
         exit
     fi
 fi
+
+ccc(){
+    echo "Exiting..."
+    kill "$(cat "$runl/web.pid")"
+    rm -rf "$runl/srs.pid" "$runl/web.pid" "$tout"
+    exit
+}
+trap ccc SIGINT
 
 ### Make and go to target directory
 mkdir -p "$tout"
@@ -119,19 +127,28 @@ if [[ $crtf -ne 1 ]]; then
     done < crt.txt
     sed -i 's/.*\.$//g; /^$/d' ips.txt
     rm crt.txt crt2.txt
+else
+    hpi=1
 fi
 
 ### Remove duplicates
 awk -i inplace '!a[$0]++' subdomains.txt
 awk -i inplace '!a[$0]++' ips.txt
+sed -i '/;/d' ips.txt
 
 ### GoWitness Subdomains
 echo "Starting GoWitness Subdomains..."
-if [[ "$web" == 1 ]]; then
+if [[ "$web" == 1 && "$hbi" == 1 ]]; then
+    bash "$run" 3 1
+    hbi=0
+elif [[ "$web" == 1 ]]; then
     bash "$run" 3
 fi
 mkdir "GoWitness-Subdomains" && cd "$_"
 gowitness scan file -f ../subdomains.txt --chrome-path "$cbp" --driver gorod --write-db --screenshot-fullpage -T 20 --log-scan-errors
+if [[ "$?" != 0 ]]; then
+    hbi=1
+fi
 gwss="$(find screenshots/ -maxdepth 1 -type f | wc -l)"
 gowitness report generate --zip-name report.zip
 unzip -q report.zip -d "Report"
@@ -153,7 +170,10 @@ done
 
 ### ISP Check
 echo "Starting ISP Check..."
-if [[ "$web" == 1 ]]; then
+if [[ "$web" == 1 && "$hbi" == 1 ]]; then
+    bash "$run" 4 1
+    hbi=0
+elif [[ "$web" == 1 ]]; then
     bash "$run" 4
 fi
 count=0
@@ -167,12 +187,13 @@ for file in ip-Split/*; do
     fi
 done
 rm -r "ip-Split/"
+sed -i 's/,{ -/Private-Local -/g' isp.txt
 
 ### ISP Parse
 echo "Starting ISP Parse..."
 sed -i 's/{"isp":"/\n/g; s/"}/\n/g' isp.txt
 sed -i '/:/!d; s/".*"/ - /g' isp.txt
-sed '/Defense.net/Id; /Akamai/Id; /Cloudflare/Id; /Fastly/Id; /CheetahMail/Id; /GoDaddy/Id; /Incapsula/Id; /Wix/Id; /SquareSpace/Id; /Namecheap/Id; /Web-hosting/Id' isp.txt > scan.txt
+sed '/Defense.net/Id; /Akamai/Id; /Cloudflare/Id; /Fastly/Id; /CheetahMail/Id; /GoDaddy/Id; /Incapsula/Id; /Wix/Id; /SquareSpace/Id; /Namecheap/Id; /Web-hosting/Id; /Private-Local/d' isp.txt > scan.txt
 sed -i 's/.* //g' scan.txt
 
 if [[ -s scan.txt ]]; then
@@ -189,23 +210,22 @@ if [[ -s scan.txt ]]; then
     sudo masscan -iL scan.txt -p 0-65535 -oX ports.txt --rate "$rate"
     ipsi="$(wc -l < scan.txt)"
     masi="$(wc -l < ports.txt)"
+else
+    echo "Skipping Masscan as IPs aren't useful."
+    if [[ "$web" == 1 ]]; then
+        bash "$run" 5 1
+    fi
+    ipsi=0
+fi
+rm scan.txt
 
+if [[ -s ports.txt ]]; then
     ### Port Parse
     echo "Starting Port Parse..."
     sed -i '/state="open"/!d' ports.txt
     sed -i 's/.*addr="//g; s/" addr.*portid="/:/g; s/".*//g' ports.txt
     awk -i inplace '!a[$0]++' ports.txt
-else
-    echo "Skipping Masscan and Port Parse as IPs aren't useful."
-    if [[ "$web" == 1 ]]; then
-        bash "$run" 5 1
-    fi
-    ipsi=0
-    masi=0
-fi
-rm scan.txt
 
-if [[ -s ports.txt ]]; then
     ### GoWitness Ports
     echo "Starting GoWitness Ports..."
     if [[ "$web" == 1 ]]; then
@@ -213,6 +233,9 @@ if [[ -s ports.txt ]]; then
     fi
     mkdir "GoWitness-Ports" && cd "$_"
     gowitness scan file -f "../ports.txt" --chrome-path "$cbp" --driver gorod --write-db --screenshot-fullpage -T 20 --log-scan-errors
+    if [[ "$?" != 0 ]]; then
+        hbi=1
+    fi
     gwps="$(find screenshots/ -maxdepth 1 -type f | wc -l)"
     gowitness report generate --zip-name "report.zip"
     unzip -q report.zip -d "Report"
@@ -222,11 +245,12 @@ if [[ -s ports.txt ]]; then
     rm -rf report.zip /tmp/leakless-amd64-* /tmp/gowitness-v3-gorod-* /tmp/.org.chromium.Chromium.*
     cd ..
 else
-    echo "Skipping GoWitness Ports as there are no open ports or useful IPs."
+    echo "Skipping Port Parse and GoWitness Ports as there are no open ports or useful IPs."
     if [[ "$web" == 1 ]]; then
         bash "$run" 6 1
     fi
     gwps=0
+    masi=0
     if [[ -e ports.txt ]]; then
         rm ports.txt
     fi
@@ -234,11 +258,18 @@ fi
 
 ### Archiving
 echo "Starting Archiving..."
-if [[ "$web" == 1 ]]; then
+if [[ "$web" == 1 && "$hbi" == 1 ]]; then
+    bash "$run" 7 1
+    hbi=0
+elif [[ "$web" == 1 ]]; then
     bash "$run" 7
 fi
 cd ..
-tar -zcvf "$1.tar.gz" "$1/"
+tar --exclude="$1/debug/terminal.txt" -cvf "$1.tar" "$1/"
+if [[ -f "$1/debug/terminal.txt" ]]; then
+    tar --append --file="$1.tar" "$1/debug/terminal.txt"
+fi
+gzip "$1.tar"
 if [[ "$web" == 1 ]]; then
     bash "$run" 8
 fi
